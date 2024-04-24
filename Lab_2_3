@@ -1,0 +1,43 @@
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split, cross_val_score, StratifiedKFold
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
+from sklearn.linear_model import LogisticRegression
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.naive_bayes import GaussianNB
+from sklearn.svm import SVC
+import matplotlib.pyplot as plt
+
+# Завантаження датасету
+iris = load_iris()
+X = iris.data
+y = iris.target
+
+# Розділення датасету на навчальну та тестову вибірки
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=1)
+
+# Моделі для оцінки
+models = []
+models.append(('LR', LogisticRegression(solver='liblinear', multi_class='ovr')))
+models.append(('LDA', LinearDiscriminantAnalysis()))
+models.append(('KNN', KNeighborsClassifier()))
+models.append(('CART', DecisionTreeClassifier()))
+models.append(('NB', GaussianNB()))
+models.append(('SVM', SVC(gamma='auto')))
+
+# Оцінка моделей
+results = []
+names = []
+for name, model in models:
+    kfold = StratifiedKFold(n_splits=10, random_state=1, shuffle=True)
+    cv_results = cross_val_score(model, X_train, y_train, cv=kfold, scoring='accuracy')
+    results.append(cv_results)
+    names.append(name)
+    msg = f"{name}: {cv_results.mean():.3f} ({cv_results.std():.3f})"
+    print(msg)
+
+# Візуалізація результатів
+plt.boxplot(results, labels=names)
+plt.title('Comparison of Classification Algorithms')
+plt.show()
