@@ -1,0 +1,63 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.naive_bayes import GaussianNB
+from sklearn.svm import SVC
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
+import matplotlib.pyplot as plt
+
+# Завантаження датасету з текстового файла
+input_file = 'adult.data.txt'
+column_names = ['age', 'workclass', 'fnlwgt', 'education', 'education-num', 'marital-status',
+                'occupation', 'relationship', 'race', 'sex', 'capital-gain', 'capital-loss',
+                'hours-per-week', 'native-country', 'income']
+
+# Читання даних з вказанням роздільника та заміною пропущених значень
+df = pd.read_csv(input_file, names=column_names, sep=',\s*', engine='python', na_values="?")
+df.dropna(inplace=True)  # Видалення рядків з відсутніми даними
+
+# Кодування категоріальних змінних
+df_encoded = pd.get_dummies(df, drop_first=True)
+
+# Відокремлення фіч та міток
+X = df_encoded.drop('income_>50K', axis=1)
+y = df_encoded['income_>50K']
+
+# Розділення на тренувальний і тестовий набори
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# Стандартизація даних
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+# Оцінка моделей
+models = {
+    'Logistic Regression': LogisticRegression(),
+    'Linear Discriminant Analysis': LinearDiscriminantAnalysis(),
+    'K-Nearest Neighbors': KNeighborsClassifier(),
+    'Decision Tree': DecisionTreeClassifier(),
+    'Naive Bayes': GaussianNB(),
+    'Support Vector Machine': SVC()
+}
+
+results = {}
+for name, model in models.items():
+    model.fit(X_train_scaled, y_train)
+    y_pred = model.predict(X_test_scaled)
+    accuracy = accuracy_score(y_test, y_pred)
+    report = classification_report(y_test, y_pred)
+    results[name] = (accuracy, report)
+    print(f'{name} - Accuracy: {accuracy:.4f}')
+
+# Виведення результатів оцінки
+for name, (accuracy, report) in results.items():
+    print(f"Results for {name}:")
+    print("Accuracy:", accuracy)
+    print("Classification Report:")
+    print(report)
+    print("\n")
